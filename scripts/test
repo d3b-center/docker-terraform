@@ -1,0 +1,30 @@
+#!/bin/bash
+
+set -e
+
+if [[ -n "${CI}" ]]; then
+    set -x
+fi
+
+set -u
+
+function usage() {
+    echo -n \
+        "Usage: $(basename "$0")
+Test container images built from Nix flakes.
+"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    if [[ "${1:-}" == "--help" ]]; then
+        usage
+    else
+        docker \
+            run --rm \
+            "ghcr.io/d3b-center/terraform:${TERRAFORM_VERSION}" -version
+
+        docker \
+            run --rm --entrypoint \
+            aws "ghcr.io/d3b-center/terraform:${TERRAFORM_VERSION}" --version
+    fi
+fi

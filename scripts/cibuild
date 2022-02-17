@@ -1,0 +1,43 @@
+#!/bin/bash
+
+set -e
+
+if [[ -n "${CI}" ]]; then
+    set -x
+fi
+
+set -u
+
+function usage() {
+    echo -n \
+        "Usage: $(basename "$0")
+Build container images from Nix flakes.
+"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    if [[ "${1:-}" == "--help" ]]; then
+        usage
+    else
+        if [[ -d "./${TERRAFORM_VERSION}" ]]; then
+            # Ensure we clean the temporary Nix store before building so we
+            # don't load stale images later on.
+            rm -rf "./${TERRAFORM_VERSION}/nix"
+
+            # Build and copy the derivation to a temporary Nix store that we can
+            # access outside the container.
+            docker-compose \
+                run --rm --workdir="/usr/local/src/${TERRAFORM_VERSION}" \
+                nix copy --no-require-sigs --to "./"
+
+            docker load <"./${TERRAFORM_VERSION}/nix/store/"*.tar.gz
+
+            ./scripts/test
+
+            docker images
+        else
+            echo "ERROR: I don't have support for that version of Terraform!"
+            exit 1
+        fi
+    fi
+fi
