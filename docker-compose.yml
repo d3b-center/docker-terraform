@@ -1,0 +1,11 @@
+services:
+  nix:
+    image: nixos/nix:2.8.0
+    volumes:
+      - ./:/usr/local/src
+      - nix:/nix
+    working_dir: /usr/local/src/
+    entrypoint: nix --extra-experimental-features "nix-command flakes"
+
+volumes:
+  nix:
